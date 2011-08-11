@@ -3,7 +3,7 @@ use vars qw($VERSION %IRSSI);
 
 use Irssi;
 
-$VERSION = '1.01';
+$VERSION = '1.03';
 
 %IRSSI = (
     authors     => 'Alexandre Gauthier',
@@ -13,6 +13,7 @@ $VERSION = '1.01';
                    'horrible japanese smileys. Use at your own ' .
                    'risk.',
     license     => 'Public Domain',
+    url         => 'https://github.com/mrdaemon/irssi-emojis',
 );
 
 
@@ -73,7 +74,7 @@ sub knifaize {
     # Do not filter commands
     if ($data =~ /^\//) { return };
 
-    while ( my($trigger, $emoji) = each(%EMOJIS)) {
+    while ( my($trigger, $emoji) = each(%EMOJIS) ) {
         $data =~ s/$trigger/$emoji/g;
     }
     
@@ -85,8 +86,12 @@ sub knifaize {
 }
 
 sub emojitable {
-    my ($data, $server, $witem) = @_;
-    return unless $witem;
+    Irssi::printformat(MSGLEVEL_CLIENTCRAP, 'tblh', "List of emojis");
+    while ( my($trigger, $emoji) = each(%EMOJIS) ) {
+        Irssi::printformat(MSGLEVEL_CLIENTCRAP, 'tbl', $trigger);
+        Irssi::printformat(MSGLEVEL_CLIENTCRAP, 'tbl', "   $emoji");
+    }
+    Irssi::printformat(MSGLEVEL_CLIENTCRAP, 'tblf', "End emojis");
 }
 
 # Settings
@@ -96,10 +101,21 @@ Irssi::settings_add_bool('lookandfeel', 'enable_knifamode', 1);
 Irssi::signal_add_first('send command', 'knifaize');
 
 # commands
-# TODO: halp
+Irssi::command_bind emojis => \&emojitable;
+
+# Register shitty format for table-ish display
+Irssi::theme_register(
+    [
+        'tblh', '%R,--[%n$*%R]%n',
+        'tbl', '%R|%n $*',
+        'tblf', '%R`--[%n$*%R]%n',
+    ]
+);
+
 
 Irssi::print("Knifa mode support version $VERSION initialized");
 Irssi::print("Loaded " . keys(%EMOJIS) . " knifaisms.");
+Irssi::print("Use /emojis to list available triggers.");
 
 
 
