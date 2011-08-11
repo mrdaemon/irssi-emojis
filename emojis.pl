@@ -62,14 +62,14 @@ my %EMOJIS = (
 my $locked = 0;
 
 sub knifaize {
+    my ($data, $server, $witem) = @_;
+
     my $enabled = Irssi::settings_get_bool('enable_knifamode');
+    my $signal = Irssi::signal_get_emitted();
 
     unless ($enabled && !$locked) {
         return;
     }
-
-    my $signal = Irssi::signal_get_emitted();
-    my ($data, $server, $witem) = @_;
 
     # Do not filter commands
     if ($data =~ /^\//) { return };
@@ -103,7 +103,8 @@ Irssi::signal_add_first('send command', 'knifaize');
 # commands
 Irssi::command_bind emojis => \&emojitable;
 
-# Register shitty format for table-ish display
+# Register formats for table-like display.
+# This was mostly shamelessly lifted from scriptassist.pl
 Irssi::theme_register(
     [
         'tblh', '%R,--[%n$*%R]%n',
