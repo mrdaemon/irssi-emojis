@@ -5,7 +5,8 @@ Because we all <3 Knifa on #glasnost.
 Instructions:
 
 1) put script in ~/.irssi/scripts
-2) /LOAD emojis.pl
-3) Marvel at your ability to use things like :table:
+2) /script load emojis.pl
+3) Use /emojis to display the list
+4) Marvel at your ability to use things like :table:
 
 
