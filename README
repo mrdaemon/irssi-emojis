@@ -6,9 +6,9 @@ Instructions:
 
 1) put script in ~/.irssi/scripts
 2) put .db file in ~/.irssi/
-2) /script load emojis.pl
-3) Use /emojis to display the list
-4) Marvel at your ability to use things like :table:
+3) /script load emojis.pl
+4) Use /emojis to display the list
+5) Marvel at your ability to use things like :table:
 
 You may add your own to the database, format is:
 
