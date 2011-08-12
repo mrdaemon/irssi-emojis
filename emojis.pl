@@ -3,7 +3,7 @@ use vars qw($VERSION %IRSSI);
 
 use Irssi;
 
-$VERSION = '1.03';
+$VERSION = '1.20';
 
 %IRSSI = (
     authors     => 'Alexandre Gauthier',
@@ -16,60 +16,54 @@ $VERSION = '1.03';
     url         => 'https://github.com/mrdaemon/irssi-emojis',
 );
 
+# Default values
+my $default_emojis_file = Irssi::get_irssi_dir() . "/emojis-db.dat";
 
-#### FIXME: OH LAWD HARCODED CONTENTS ####
-
-my %EMOJIS = (
-    ':hug:'          => 'ヽ(´ー｀)ノ',
-    ':yudothis:'     => 'щ(ﾟДﾟщ)',
-    ':xd:'           => '( ˃ ヮ˂)',
-    ':kiss:'         => '( ¯3¯)',
-    ':smile:'        => '( ﾟ ヮﾟ)',
-    ':mad3:'         => 'ಠ_ಠ',
-    ':mad2:'         => 'ヽ(`Д´)ﾉ',
-    ':punch:'        => '(　`Д´)=◯)`ν°)',
-    ':shock2:'       => '(゜△゜;)',
-    ':sigh2:'        => '(　´Д｀)',
-    ':table3:'       => '(ﾉ `Д´)ﾉ ~~~┻━┻)`ν゜)',
-    ':table2:'       => '(　`Д´)ﾉ┳━┳',
-    ':moe:'          => 'ℳℴℯ❤',
-    ':cry:'          => '｡･ﾟ･(ﾉД｀)･ﾟ･｡',
-    ':nyoro:'        => '(´・ω・)',
-    ':cummed:'       => 'ＴＨＥ　ＰＬＥＡＳＵＲＥ　ＯＦ　ＢＥＩＮＧ　ＣＵＭＭＥＤ　ＩＮＳＩＤＥ',
-    ':mad:'          => '(╬ ಠ益ಠ)',
-    ':yay:'          => "ヽ(' ▽' )ノ !",
-    ':flower5:'      => '♡(✿ˇ◡ˇ)人(ˇ◡ˇ✿)♡',
-    ':claw:'         => '( ﾟ◡◡ﾟ)☄',
-    ':facethrow:'    => '(ﾉ ¯3¯)ﾉ ~( `Д´)',
-    ':haha:'         => '( ﾟ∀ﾟ)ｱﾊﾊ八八ﾉヽﾉヽﾉヽﾉ ＼ / ＼/ ＼',
-    ':cummedhorror:' => 'ＴＨＥ ＨＯＲＲＯＲ ＯＦ ＢＥＩＮＧ ＣＵＭＭＥＤ ＩＮＳＩＤＥ.',
-    ':snob:'         => '(¯^¯ )',
-    ':idunnolol:'    => '¯\(°_o)/¯',
-    ':table:'        => '(ﾉ `Д´)ﾉ ~┻━┻',
-    ':hug4:'         => '(づ｡◕‿◕｡)づ',
-    ':hug3:'         => '(づ｡◕‿‿‿‿◕｡)づ',
-    ':smile2:'       => '(｡◕‿◕｡)',
-    ':sad:'          => '( ﾟ∩ﾟ)',
-    ':hug2:'         => '(っ´ω｀)っ',
-    ':shock:'        => 'Σ(ﾟДﾟ)',
-    ':sigh:'         => '( ´_ゝ`)',
-    ':slap:'         => '(　`Д´)ﾉ)`ν゜)',
-    ':codeindentation:'     => 'ＴＨＥ ＦＯＲＣＥＤ ＩＮＤＥＮＴＡＴＩＯＮ ＯＦ ＣＯＤＥ.',
-    ':corea:'       => '（　｀ー´）',
-    
-);
-
+# internal structures and variables
+my %EMOJIS = ();
 my $locked = 0;
 
+# void load_emojis()
+# Load the emojis from the file specified in the 'knifamode_dbfile'
+# setting in the irssi configuration. Format is trigger on a line, emoji
+# on the following one, repeat until end of file.
+sub load_emojis {
+    my $dbfile = Irssi::settings_get_str('knifamode_dbfile');
+
+    if ( -e $dbfile && -r $dbfile) {
+        open my $fh, '<', $dbfile or die "Unable to read $dbfile: $!";
+        
+        while(<$fh>) {
+            chomp;
+            my $line = $_;
+            my $nextline;
+
+            # Horrible sanity check, ensure line starts with
+            # a colon. Once validated, assume the next line is the emoji text.
+            if ($line =~ m/^:/) {
+                $nextline = <$fh>;
+                chomp($nextline);
+                $EMOJIS{$line} = $nextline; # Add key/value to hash
+            } else {
+                Irssi::print("Malformed line in emoji db: $line. Skipping.");
+            }
+
+        }
+    } else {
+        Irssi::print("emojis.pl: No such file, or acces denied: $dbfile");
+    }
+}
+
+# void knifaize($data, $server, $witem)
+# Parses input line in $data, replaces emojis and emits
+# the signal back where it came from.
 sub knifaize {
     my ($data, $server, $witem) = @_;
 
-    my $enabled = Irssi::settings_get_bool('enable_knifamode');
+    my $enabled = Irssi::settings_get_bool('knifamode_enable');
     my $signal = Irssi::signal_get_emitted();
 
-    unless ($enabled && !$locked) {
-        return;
-    }
+    return unless ($enabled && !$locked);
 
     # Do not filter commands
     if ($data =~ /^\//) { return };
@@ -95,7 +89,9 @@ sub emojitable {
 }
 
 # Settings
-Irssi::settings_add_bool('lookandfeel', 'enable_knifamode', 1);
+Irssi::settings_add_bool('lookandfeel', 'knifamode_enable', 1);
+Irssi::settings_add_str('lookandfeel', 'knifamode_dbfile',
+                            $default_emojis_file);
 
 # hooks
 Irssi::signal_add_first('send command', 'knifaize');
@@ -113,10 +109,16 @@ Irssi::theme_register(
     ]
 );
 
+# main():
+
+Irssi::print("Loading emojis from " . 
+    Irssi::settings_get_str('knifamode_dbfile') .
+    "...");
+
+load_emojis();
 
 Irssi::print("Knifa mode support version $VERSION initialized");
 Irssi::print("Loaded " . keys(%EMOJIS) . " knifaisms.");
 Irssi::print("Use /emojis to list available triggers.");
-
 
 
