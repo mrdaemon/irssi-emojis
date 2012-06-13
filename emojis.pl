@@ -3,12 +3,12 @@ use vars qw($VERSION %IRSSI);
 
 use Irssi;
 
-$VERSION = '1.20';
+$VERSION = '1.21';
 
 %IRSSI = (
     authors     => 'Alexandre Gauthier',
     contact     => 'alex@underwares.org',
-    name        => 'Bullshit Knifaisms Smileys',
+    name        => 'Knifa-mode for irssi',
     description => 'This script pretty much allows you spam ' .
                    'horrible japanese smileys. Use at your own ' .
                    'risk.',
@@ -106,19 +106,23 @@ Irssi::theme_register(
         'tblh', '%R,--[%n$*%R]%n',
         'tbl', '%R|%n $*',
         'tblf', '%R`--[%n$*%R]%n',
+        'banner', '%R>>%n %_Knifamode:%_ $0 initialized, version $1',
+        'statusbanner', '%R>>%n %_Knifamode:%_ Loaded $0 knifaisms.',
+        'loadbanner', '%R>>%n %_Knifamode:%_ Loading emojis from $0 ...',
+        'statusmsg', '%R>>%n %_Knifamode:%_ - $0 -'
     ]
 );
 
 # main():
 
-Irssi::print("Loading emojis from " . 
-    Irssi::settings_get_str('knifamode_dbfile') .
-    "...");
+Irssi::printformat(MSGLEVEL_CLIENTCRAP, 'loadbanner', 
+    Irssi::settings_get_str('knifamode_dbfile')); 
 
 load_emojis();
 
-Irssi::print("Knifa mode support version $VERSION initialized");
-Irssi::print("Loaded " . keys(%EMOJIS) . " knifaisms.");
-Irssi::print("Use /emojis to list available triggers.");
+Irssi::printformat(MSGLEVEL_CLIENTCRAP, 'banner', $IRSSI{name}, $VERSION);
+Irssi::printformat(MSGLEVEL_CLIENTCRAP, 'statusbanner', scalar(keys %EMOJIS));
+Irssi::printformat(MSGLEVEL_CLIENTCRAP, 'statusmsg',
+    "Use /emojis to list available triggers.");
 
-
+###
