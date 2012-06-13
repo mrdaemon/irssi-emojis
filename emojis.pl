@@ -54,6 +54,20 @@ sub load_emojis {
     }
 }
 
+# void reload_emojis()
+# Reloads the emojis database from file
+sub reload_emojis {
+    %EMOJIS = ();
+    load_emojis();
+
+    Irssi::print("Reloading emojis database from file...");
+
+    Irssi::printformat(MSGLEVEL_CLIENTCRAP, 'loadbanner', 
+        Irssi::settings_get_str('knifamode_dbfile')); 
+    Irssi::printformat(MSGLEVEL_CLIENTCRAP, 'statusbanner', 
+        scalar(keys %EMOJIS));
+}
+
 # void knifaize($data, $server, $witem)
 # Parses input line in $data, replaces emojis and emits
 # the signal back where it came from.
@@ -71,7 +85,7 @@ sub knifaize {
     while ( my($trigger, $emoji) = each(%EMOJIS) ) {
         $data =~ s/$trigger/$emoji/g;
     }
-    
+)
     # event with shit mutex, lawl
     $locked = 1;
     Irssi::signal_emit("$signal", $data, $server, $witem);
@@ -98,6 +112,7 @@ Irssi::signal_add_first('send command', 'knifaize');
 
 # commands
 Irssi::command_bind emojis => \&emojitable;
+Irssi::command_bind reloademojis => \&reload_emojis;
 
 # Register formats for table-like display.
 # This was mostly shamelessly lifted from scriptassist.pl
