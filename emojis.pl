@@ -85,7 +85,7 @@ sub knifaize {
     while ( my($trigger, $emoji) = each(%EMOJIS) ) {
         $data =~ s/$trigger/$emoji/g;
     }
-)
+
     # event with shit mutex, lawl
     $locked = 1;
     Irssi::signal_emit("$signal", $data, $server, $witem);
