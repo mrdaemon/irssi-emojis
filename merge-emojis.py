@@ -22,6 +22,7 @@ Description:
 
     Guarantees that no value is lost, though some might get
     new namess
+License: Pubic domain :)
 '''
 
 import sys
