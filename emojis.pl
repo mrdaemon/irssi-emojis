@@ -1,6 +1,7 @@
 use strict;
 use vars qw($VERSION %IRSSI);
 use List::Util qw(max);
+use Text::CharWidth qw(mbswidth);
 
 use Irssi;
 
@@ -32,7 +33,7 @@ sub load_emojis {
     my $dbfile = Irssi::settings_get_str('knifamode_dbfile');
 
     if ( -e $dbfile && -r $dbfile) {
-        open my $fh, '<', $dbfile or die "Unable to read $dbfile: $!";
+        open my $fh, '<utf8', $dbfile or die "Unable to read $dbfile: $!";
         
         while(<$fh>) {
             chomp;
@@ -105,38 +106,44 @@ sub emojitable {
 
 sub ensureLength {
     my $length = @_[0];
-    my $str = @_[1];
+    my $filler = @_[1];
+    my $str = @_[2];
     my $result = $str;
-    while(length($result) < $length) {
-	$result .= " ";
+    while(mbswidth($result) < $length) {
+	$result .= $filler;
     }
+    return $result;
 }
 
-sub emojiprettyprint {
-    my $leftmargin = 12;  # TODO should depend on timestamp format etc
-    my $width = Irssi::active_win()->{'width'} - $leftmargin;  # The room we have to print in
-    my $spacing = 2;
+sub emojifill {
+    my $leftmargin = 16;  # TODO should depend on timestamp format etc
+    my $width = Irssi::active_win()->{'width'} - $leftmargin;
+    my $spacing = 4;
+    my $spacingString = "    ";
     my @emojis = ();
     my @triggers = ();
 
-    #  Insert tuples into rows with greedy algo
+    #  Insert tuples into rows with greedy algo: fill longest lines first
     while ( my($trigger, $emoji) = each(%EMOJIS) ) {
-	my $tupleLength = max($trigger, $emoji) + $spacing;
-	my $adjustedTrigger = ensureLength($tupleLength, $trigger);
-	my $adjustedEmoji = ensureLength($tupleLength, $emoji);
+	my $tupleLength =
+	    max(mbswidth($trigger), mbswidth($emoji)) + $spacing;
+	my $adjustedTrigger = ensureLength($tupleLength, " ", $trigger);
+	my $adjustedEmoji = ensureLength($tupleLength, " ", $emoji);
 
-	if ($#emojis == 0) {
+	if ($#emojis == -1) {
 	    #  First tuple, add to new line
 	    push(@emojis, $adjustedEmoji);
 	    push(@triggers, $adjustedTrigger);
 	} else {
 	    my $didPut = 0;
+	    #  Add tuple to longest possible line
 	    for (my $i=0; $i < $#emojis; $i++) {
-		#  Add tuple to longest possible line
-		if (length(@emojis[$i]+$tupleLength <= $width)) {
+		if (mbswidth(@emojis[$i]) + mbswidth($adjustedEmoji)
+		  <= $width) {
 		    @emojis[$i] = @emojis[$i] .= $adjustedEmoji;
 		    @triggers[$i] = @triggers[$i] .= $adjustedTrigger;
 		    $didPut = 1;
+		    last;
 		}
 	    }
 	    if ($didPut == 0) {
@@ -146,14 +153,15 @@ sub emojiprettyprint {
 	    }
 
 	    #  Sort lines with longest first
-	    @emojis = sort {length $b <=> length $a} @emojis;
-	    @triggers = sort {length $b <=> length $a} @triggers;
+	    @emojis = sort {mbswidth $b <=> mbswidth $a} @emojis;
+	    @triggers = sort {mbswidth $b <=> mbswidth $a} @triggers;
 	}
     }
     Irssi::printformat(MSGLEVEL_CLIENTCRAP, 'tblh', "List of emojis");
     for (my $i=0; $i < $#emojis; $i++) {
 	Irssi::printformat(MSGLEVEL_CLIENTCRAP, 'tbl', @triggers[$i]);
 	Irssi::printformat(MSGLEVEL_CLIENTCRAP, 'tbl', @emojis[$i]);
+	Irssi::printformat(MSGLEVEL_CLIENTCRAP, 'tbl', "");
     }
     Irssi::printformat(MSGLEVEL_CLIENTCRAP, 'tblf', "End emojis");
 }
@@ -168,7 +176,7 @@ Irssi::signal_add_first('send command', 'knifaize');
 
 # commands
 Irssi::command_bind emojis => \&emojitable;
-Irssi::command_bind eee => \&emojiprettyprint;
+Irssi::command_bind emoji => \&emojifill;
 Irssi::command_bind reloademojis => \&reload_emojis;
 
 # Register formats for table-like display.
@@ -195,6 +203,6 @@ load_emojis();
 Irssi::printformat(MSGLEVEL_CLIENTCRAP, 'banner', $IRSSI{name}, $VERSION);
 Irssi::printformat(MSGLEVEL_CLIENTCRAP, 'statusbanner', scalar(keys %EMOJIS));
 Irssi::printformat(MSGLEVEL_CLIENTCRAP, 'statusmsg',
-    "Use /emojis to list available triggers.");
+    "Use /emoji or /emojis to list available triggers.");
 
 ###
