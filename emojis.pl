@@ -1,6 +1,6 @@
 use strict;
 use vars qw($VERSION %IRSSI);
-use List::Util qw(max)
+use List::Util qw(max);
 
 use Irssi;
 
@@ -104,8 +104,9 @@ sub emojitable {
 }
 
 sub ensureLength {
-    ($length, $str) = @_;
-    $result = $str;
+    my $length = @_[0];
+    my $str = @_[1];
+    my $result = $str;
     while(length($result) < $length) {
 	$result .= " ";
     }
@@ -113,7 +114,7 @@ sub ensureLength {
 
 sub emojiprettyprint {
     my $leftmargin = 12;  # TODO should depend on timestamp format etc
-    my $width = $window->{'width'} - $leftmargin;  # The room we have to print in
+    my $width = Irssi::active_win()->{'width'} - $leftmargin;  # The room we have to print in
     my $spacing = 2;
     my @emojis = ();
     my @triggers = ();
@@ -124,17 +125,17 @@ sub emojiprettyprint {
 	my $adjustedTrigger = ensureLength($tupleLength, $trigger);
 	my $adjustedEmoji = ensureLength($tupleLength, $emoji);
 
-	if ($@emojis == 0) {
+	if ($#emojis == 0) {
 	    #  First tuple, add to new line
 	    push(@emojis, $adjustedEmoji);
 	    push(@triggers, $adjustedTrigger);
 	} else {
 	    my $didPut = 0;
-	    for ($i=0; $i < $#emojis; $i++) {
+	    for (my $i=0; $i < $#emojis; $i++) {
 		#  Add tuple to longest possible line
 		if (length(@emojis[$i]+$tupleLength <= $width)) {
-		    @emojis[$i] .= $adjustedEmoji;
-		    @triggers[$i] .= $adjustedTrigger;
+		    @emojis[$i] = @emojis[$i] .= $adjustedEmoji;
+		    @triggers[$i] = @triggers[$i] .= $adjustedTrigger;
 		    $didPut = 1;
 		}
 	    }
@@ -150,9 +151,9 @@ sub emojiprettyprint {
 	}
     }
     Irssi::printformat(MSGLEVEL_CLIENTCRAP, 'tblh', "List of emojis");
-    for ($i=0; $i < $#emojis; $i++) {
-	Irssi::printformat(MSGLEVEL_CLIENTCRAP, 'tbl', @trigger[$i]);
-	Irssi::printformat(MSGLEVEL_CLIENTCRAP, 'tbl', @emoji[$i]);
+    for (my $i=0; $i < $#emojis; $i++) {
+	Irssi::printformat(MSGLEVEL_CLIENTCRAP, 'tbl', @triggers[$i]);
+	Irssi::printformat(MSGLEVEL_CLIENTCRAP, 'tbl', @emojis[$i]);
     }
     Irssi::printformat(MSGLEVEL_CLIENTCRAP, 'tblf', "End emojis");
 }
