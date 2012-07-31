@@ -102,6 +102,19 @@ sub emojitable {
     Irssi::printformat(MSGLEVEL_CLIENTCRAP, 'tblf', "End emojis");
 }
 
+sub complete_emoji {
+    my ($complist, $window, $word, $linestart, $want_space) = @_;
+    my $word_regexp = quotemeta ($word);
+    $word_regexp = qr/^$word_regexp/i;  # Compile regexp
+    my @matches = ();
+    foreach my $trigger (keys %EMOJIS) {
+	push(@matches, $trigger) if ($trigger =~ m/$word_regexp/);
+    }
+    if (scalar(@matches) > 0) {
+	push(@{$complist}, $EMOJIS{@matches[0]});
+    }
+    # TODO if more than one match, do something smart?
+}
 # Settings
 Irssi::settings_add_bool('lookandfeel', 'knifamode_enable', 1);
 Irssi::settings_add_str('lookandfeel', 'knifamode_dbfile',
@@ -109,6 +122,7 @@ Irssi::settings_add_str('lookandfeel', 'knifamode_dbfile',
 
 # hooks
 Irssi::signal_add_first('send command', 'knifaize');
+Irssi::signal_add_last('complete word' => \&complete_emoji);
 
 # commands
 Irssi::command_bind emojis => \&emojitable;
