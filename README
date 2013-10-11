@@ -17,4 +17,6 @@ You may add your own to the database, format is:
 
 Your trigger MUST begin with ':'.
 
+NOTE: there is also a weechat version now: https://github.com/mrdaemon/weechat-emojis
+
 
