@@ -5,7 +5,7 @@ Because we all <3 Knifa on #glasnost.
 Instructions:
 
 1) put script in ~/.irssi/scripts
-2) put .db file in ~/.irssi/
+2) put .dat file in ~/.irssi/
 3) /script load emojis.pl
 4) Use /emojis to display the list
 5) Marvel at your ability to use things like :table:
