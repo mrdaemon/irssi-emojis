@@ -2,6 +2,11 @@ The shittiest irssi plugin ever. Automagical emoji tags
 Because we all <3 Knifa on #glasnost.
 ----------------------------------------------------------
 
+ATTENTION: This is no longer actively maintained, I have since then moved to
+           weechat as my irc client. Feel free to send pull requests though.
+
+The Weechat version is here: https://github.com/mrdaemon/weechat-emojis
+
 Instructions:
 
 1) put script in ~/.irssi/scripts
@@ -16,7 +21,4 @@ You may add your own to the database, format is:
   smiley
 
 Your trigger MUST begin with ':'.
-
-NOTE: there is also a weechat version now: https://github.com/mrdaemon/weechat-emojis
-
 
